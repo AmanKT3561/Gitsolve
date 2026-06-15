@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "GitSolve AI",
+  "version": "1.0.0",
+  "description": "Auto-saves your accepted competitive-programming solutions to GitHub with AI explanations.",
+  "permissions": ["storage", "tabs", "identity", "scripting", "webNavigation"],
+  "host_permissions": [
+    "http://localhost:3001/*",
+    "https://leetcode.com/*",
+    "https://*.leetcode.com/*",
+    "https://codeforces.com/*",
+    "https://*.codeforces.com/*",
+    "https://cses.fi/*",
+    "https://*.cses.fi/*",
+    "https://codechef.com/*",
+    "https://www.codechef.com/*",
+    "https://*.codechef.com/*",
+    "https://geeksforgeeks.org/*",
+    "https://www.geeksforgeeks.org/*",
+    "https://*.geeksforgeeks.org/*",
+    "https://hackerrank.com/*",
+    "https://www.hackerrank.com/*",
+    "https://*.hackerrank.com/*",
+    "https://atcoder.jp/*",
+    "https://*.atcoder.jp/*",
+    "https://naukri.com/*",
+    "https://www.naukri.com/*",
+    "https://*.naukri.com/*",
+    "https://codingninjas.com/*",
+    "https://www.codingninjas.com/*",
+    "https://*.codingninjas.com/*",
+    "https://interviewbit.com/*",
+    "https://www.interviewbit.com/*",
+    "https://*.interviewbit.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["content/*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

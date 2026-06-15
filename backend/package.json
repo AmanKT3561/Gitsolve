@@ -1,0 +1,24 @@
+{
+  "name": "gitsolve-backend",
+  "version": "1.0.0",
+  "description": "GitSolve AI backend - auto-save accepted CP solutions to GitHub with AI explanations",
+  "main": "src/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.7.0",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12"
+  }
+}
