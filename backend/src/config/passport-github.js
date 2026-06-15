@@ -17,7 +17,7 @@ function configurePassport() {
       {
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: process.env.GITHUB_CALLBACK_URL, // http://localhost:3001/auth/success
+        callbackURL: process.env.GITHUB_CALLBACK_URL, // e.g. https://gitsolve-1.onrender.com/auth/success
         scope: ['read:user', 'user:email', 'repo'],
       },
       async (accessToken, _refreshToken, profile, done) => {

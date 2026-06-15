@@ -3,7 +3,7 @@
 Production URLs this build is wired to:
 
 - **Backend (Render):** https://gitsolve-1.onrender.com
-- **Dashboard (Vercel):** https://gitsolve-git-main-amans-projects-ee230b73.vercel.app
+- **Dashboard (Vercel):** https://gitsolve-five.vercel.app
 
 To change them later: backend URL lives in `chrome-extension/background.js` (`BACKEND_URL`),
 `chrome-extension/manifest.json` (`host_permissions`), and `dashboard-frontend/src/lib/api.js`
@@ -29,7 +29,7 @@ JWT_SECRET=<long random string>
 GITHUB_CLIENT_ID=<from your GitHub OAuth App>
 GITHUB_CLIENT_SECRET=<from your GitHub OAuth App>
 GITHUB_CALLBACK_URL=https://gitsolve-1.onrender.com/auth/success
-FRONTEND_URL=https://gitsolve-git-main-amans-projects-ee230b73.vercel.app
+FRONTEND_URL=https://gitsolve-five.vercel.app
 GEMINI_API_KEY=<AI Studio key>
 ENCRYPTION_KEY=<64 hex chars>
 ```
@@ -46,7 +46,7 @@ Network Access → add `0.0.0.0/0` (Render's outbound IPs rotate, so a fixed IP 
 ## 3. GitHub OAuth App
 
 GitHub → Settings → Developer settings → OAuth Apps → your app:
-- **Homepage URL:** `https://gitsolve-git-main-amans-projects-ee230b73.vercel.app`
+- **Homepage URL:** `https://gitsolve-five.vercel.app`
 - **Authorization callback URL:** `https://gitsolve-1.onrender.com/auth/success`
 
 This must match `GITHUB_CALLBACK_URL` exactly or OAuth fails.

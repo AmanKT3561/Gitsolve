@@ -44,7 +44,7 @@ app.use(errorHandler);
 (async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(`[server] GitSolve AI backend on http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`[server] GitSolve AI backend listening on port ${PORT}`));
   } catch (err) {
     console.error('[server] failed to start:', err.message);
     process.exit(1);
