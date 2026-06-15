@@ -128,4 +128,3 @@ Open `http://localhost:5173`, click **Connect GitHub** (popup OAuth), and your d
 
 - **shadcn/ui:** the dashboard ships lightweight, self-contained Tailwind primitives (`src/components/ui.jsx`) so the project runs with zero extra setup. To switch to real shadcn/ui, run its CLI and replace the imports from `./ui` with the generated components — the prop shapes (`Card`, `Button`, `Badge`) are intentionally compatible.
 - **GitHub token storage:** never stored in plaintext. It's encrypted at rest with AES-256-GCM via a Mongoose virtual and excluded from all JSON responses.
-# Gitsolve

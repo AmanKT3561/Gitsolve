@@ -119,49 +119,88 @@
   }
 
   // ---- platform-specific detection ----
+  // Language: the Monaco model's language id is the reliable source (the
+  // localStorage 'global_lang' is the *last-used* language globally, not the
+  // current problem's — it was returning stale values like "mysql").
   function lcLang() {
-    // LeetCode persists the selected language slug (e.g. "cpp", "python3").
     try {
-      var raw = window.localStorage.getItem('global_lang');
-      if (raw) return raw.replace(/^"|"$/g, '');
+      if (window.monaco && window.monaco.editor && window.monaco.editor.getModels) {
+        var models = window.monaco.editor.getModels();
+        var best = null, bestLen = -1;
+        models.forEach(function (m) {
+          var v = (m.getValue && m.getValue()) || '';
+          if (v.length > bestLen) { bestLen = v.length; best = m; }
+        });
+        if (best && best.getLanguageId) {
+          var id = best.getLanguageId();
+          if (id && id !== 'plaintext') return id; // e.g. 'cpp', 'python', 'java'
+        }
+      }
     } catch (e) {}
-    // Fallback: a visible language selector button.
+    // Fallback: the visible language selector button (shows e.g. "C++").
     var btn = document.querySelector('button[id^="headlessui-listbox-button"], [data-cy="lang-select"]');
     if (btn && btn.textContent) {
-      var t = btn.textContent.trim().toLowerCase();
+      var t = btn.textContent.trim();
       if (t && t.length < 16) return t;
     }
     return '';
   }
 
+  // Difficulty + canonical title aren't on the submission view, so fetch them
+  // from LeetCode's GraphQL by slug. Calls back with {} on any failure.
+  function lcFetchMeta(slug, cb) {
+    try {
+      fetch('/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          query: 'query q($t:String!){question(titleSlug:$t){title difficulty}}',
+          variables: { t: slug },
+        }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var q = j && j.data && j.data.question;
+          cb(q ? { title: q.title, difficulty: q.difficulty } : {});
+        })
+        .catch(function () { cb({}); });
+    } catch (e) { cb({}); }
+  }
+
   function lcEmit(subId, langHint) {
     if (!subId) return;
     if (window._gsSeen.has('lc' + subId)) return;
-    window._gsSeen.add('lc' + subId);
+    window._gsSeen.add('lc' + subId); // dedup before async so the observer can't double-fire
 
     var slug = (location.pathname.match(/\/problems\/([^\/]+)/) || [])[1] || 'unknown';
-    var title = gsText('div[data-cy="question-title"]') ||
+    var domTitle = gsText('div[data-cy="question-title"]') ||
                 gsText('.text-title-large a') ||
                 gsText('a[href^="/problems/' + slug + '"]') ||
                 (document.title.replace(/\s*-\s*LeetCode.*$/, '').trim()) ||
                 slug;
-    var diff = gsDifficulty(
+    var domDiff = gsDifficulty(
       gsText('[class*="text-difficulty-"]') ||
-      gsText('[class*="difficulty"]') ||
-      gsText('.text-olive, .text-yellow, .text-pink')
+      gsText('[class*="difficulty"]')
     );
+    var lang = langHint || lcLang() || 'unknown';
     var code = gsGetCode();
-    try { console.log('[gitsolve leetcode] emit', { subId: subId, slug: slug, codeLen: code.length }); } catch (e) {}
-    gsPost({
-      platform: 'leetcode',
-      externalSubmissionId: String(subId),
-      problemSlug: slug,
-      problemTitle: title,
-      problemUrl: location.origin + '/problems/' + slug + '/',
-      difficulty: diff,
-      language: langHint || lcLang() || 'unknown',
-      code: code,
-      topics: [],
+
+    lcFetchMeta(slug, function (meta) {
+      var difficulty = (meta && meta.difficulty) || domDiff || 'Unknown';
+      var title = (meta && meta.title) || domTitle;
+      try { console.log('[gitsolve leetcode] emit', { subId: subId, slug: slug, lang: lang, difficulty: difficulty, codeLen: code.length }); } catch (e) {}
+      gsPost({
+        platform: 'leetcode',
+        externalSubmissionId: String(subId),
+        problemSlug: slug,
+        problemTitle: title,
+        problemUrl: location.origin + '/problems/' + slug + '/',
+        difficulty: difficulty,
+        language: lang,
+        code: code,
+        topics: [],
+      });
     });
   }
 

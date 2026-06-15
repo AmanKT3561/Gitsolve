@@ -5,7 +5,7 @@
   "description": "Auto-saves your accepted competitive-programming solutions to GitHub with AI explanations.",
   "permissions": ["storage", "tabs", "identity", "scripting", "webNavigation"],
   "host_permissions": [
-    "http://localhost:3001/*",
+    "https://gitsolve-1.onrender.com/*",
     "https://leetcode.com/*",
     "https://*.leetcode.com/*",
     "https://codeforces.com/*",

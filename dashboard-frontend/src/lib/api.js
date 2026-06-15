@@ -3,7 +3,7 @@
 // extension uses in chrome.storage.local — they are independent stores but
 // we keep the name consistent for clarity).
 
-export const BACKEND_URL = 'http://localhost:3001';
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://gitsolve-1.onrender.com';
 const TOKEN_KEY = 'gitsolve_token';
 
 export function getToken() {

@@ -11,7 +11,7 @@
 //      '/auth/success#token='.
 //   4. POST detected submissions to the backend with the stored JWT.
 
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = 'https://gitsolve-1.onrender.com';
 const TOKEN_KEY = 'gitsolve_token';
 const RECENT_KEY = 'gitsolve_recent';
 

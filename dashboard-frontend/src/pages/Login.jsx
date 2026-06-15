@@ -58,7 +58,7 @@ export default function Login() {
         </Card>
 
         <p className="mt-6 text-center text-[11px] text-faint">
-          Backend expected at <span className="mono text-muted">http://localhost:3001</span>
+          Backend expected at <span className="mono text-muted">https://gitsolve-1.onrender.com</span>
         </p>
       </div>
     </div>
