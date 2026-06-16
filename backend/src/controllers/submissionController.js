@@ -5,6 +5,7 @@ const Statistics = require('../models/Statistics');
 const { pushSolution } = require('../services/githubService');
 const { generateExplanation } = require('../services/geminiService');
 const { monthUTC, todayUTC, computeStreaks } = require('../utils/stats');
+const { normalizeLanguage } = require('../utils/lang');
 
 const DIFF_FIELD = { Easy: 'easySolved', Medium: 'mediumSolved', Hard: 'hardSolved' };
 
@@ -131,7 +132,7 @@ async function createSubmission(req, res, next) {
       problemTitle: b.problemTitle || '',
       problemUrl: b.problemUrl || '',
       difficulty: ['Easy', 'Medium', 'Hard'].includes(b.difficulty) ? b.difficulty : 'Unknown',
-      language: b.language || 'unknown',
+      language: normalizeLanguage(b.language, b.code),
       topics: Array.isArray(b.topics) ? b.topics.slice(0, 25) : [],
       code: b.code,
       externalSubmissionId: b.externalSubmissionId ? String(b.externalSubmissionId) : '',

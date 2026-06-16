@@ -28,7 +28,24 @@ const EXTENSION_BY_LANG = {
 function extensionFor(language) {
   if (!language) return 'txt';
   const key = String(language).toLowerCase().trim();
-  return EXTENSION_BY_LANG[key] || 'txt';
+  if (EXTENSION_BY_LANG[key]) return EXTENSION_BY_LANG[key];
+  // Fuzzy match verbose judge strings, e.g. "C++23 (GCC 14)", "Python 3.11", "PyPy3".
+  if (/c\+\+|\bcpp\b|\bg\+\+|gcc|clang/.test(key)) return 'cpp';
+  if (/python|pypy|\bpy\b/.test(key)) return 'py';
+  if (/javascript|node|\bjs\b/.test(key)) return 'js';
+  if (/typescript|\bts\b/.test(key)) return 'ts';
+  if (/\bjava\b/.test(key)) return 'java';
+  if (/kotlin/.test(key)) return 'kt';
+  if (/c#|csharp|\.net|mono/.test(key)) return 'cs';
+  if (/golang|\bgo\b/.test(key)) return 'go';
+  if (/rust/.test(key)) return 'rs';
+  if (/ruby/.test(key)) return 'rb';
+  if (/\bphp\b/.test(key)) return 'php';
+  if (/scala/.test(key)) return 'scala';
+  if (/swift/.test(key)) return 'swift';
+  if (/\bsql\b|mysql|postgre/.test(key)) return 'sql';
+  if (/\bc\b/.test(key)) return 'c';
+  return 'txt';
 }
 
 function metadataHeader({ platform, problemTitle, problemUrl, difficulty, language }, ext) {
