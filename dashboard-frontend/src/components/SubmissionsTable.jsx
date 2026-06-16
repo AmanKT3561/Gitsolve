@@ -34,11 +34,11 @@ export default function SubmissionsTable({ data, loading, page, pages, onPage })
               <tr className="text-left text-[11px] uppercase tracking-widest text-muted">
                 <th className="px-5 py-2 font-medium">Problem</th>
                 <th className="px-3 py-2 font-medium">Platform</th>
-                <th className="px-3 py-2 font-medium">Difficulty</th>
-                <th className="px-3 py-2 font-medium">Lang</th>
+                <th className="hidden px-3 py-2 font-medium sm:table-cell">Difficulty</th>
+                <th className="hidden px-3 py-2 font-medium lg:table-cell">Lang</th>
                 <th className="px-3 py-2 font-medium">Status</th>
-                <th className="px-3 py-2 font-medium">When</th>
-                <th className="px-5 py-2" />
+                <th className="hidden px-3 py-2 font-medium md:table-cell">When</th>
+                <th className="hidden px-5 py-2 sm:table-cell" />
               </tr>
             </thead>
             <tbody>
@@ -50,7 +50,7 @@ export default function SubmissionsTable({ data, loading, page, pages, onPage })
                     key={s._id}
                     className="border-t border-ink-600/70 transition-colors hover:bg-ink-600/40"
                   >
-                    <td className="max-w-[280px] px-5 py-3">
+                    <td className="max-w-[200px] px-5 py-3 sm:max-w-[280px]">
                       <Link
                         to={`/submissions/${s._id}`}
                         className="block truncate font-medium text-slate-100 hover:text-ac"
@@ -60,23 +60,23 @@ export default function SubmissionsTable({ data, loading, page, pages, onPage })
                       </Link>
                       <span className="mono block truncate text-[11px] text-faint">{s.problemSlug}</span>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="whitespace-nowrap px-3 py-3">
                       <PlatformBadge platform={s.platform} />
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="hidden whitespace-nowrap px-3 py-3 sm:table-cell">
                       <Badge color={diff.color}>{diff.label}</Badge>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="hidden whitespace-nowrap px-3 py-3 lg:table-cell">
                       <span className="mono text-xs text-muted">{s.language || '—'}</span>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="whitespace-nowrap px-3 py-3">
                       <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: st.color }}>
                         <Dot color={st.color} />
                         {st.label}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-xs text-muted">{fmtDateTime(s.createdAt)}</td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="hidden whitespace-nowrap px-3 py-3 text-xs text-muted md:table-cell">{fmtDateTime(s.createdAt)}</td>
+                    <td className="hidden px-5 py-3 text-right sm:table-cell">
                       <Link to={`/submissions/${s._id}`} className="text-xs font-medium text-idx hover:underline">
                         View
                       </Link>

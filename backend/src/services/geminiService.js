@@ -22,11 +22,12 @@ const FALLBACK = {
   timeComplexity: 'Unknown',
   spaceComplexity: 'Unknown',
   keyLearning: '',
+  topics: [],
 };
 
 function buildPrompt(submission) {
-  return `You are a competitive programming mentor. Analyze the accepted solution below and respond with ONLY a JSON object (no markdown, no code fences, no prose) with exactly these string fields:
-"intuition", "approach", "dryRun", "timeComplexity", "spaceComplexity", "keyLearning".
+  return `You are a competitive programming mentor. Analyze the accepted solution below and respond with ONLY a JSON object (no markdown, no code fences, no prose) with exactly these fields:
+"intuition", "approach", "dryRun", "timeComplexity", "spaceComplexity", "keyLearning" (all strings), and "topics" (an array).
 
 Guidelines:
 - intuition: the core idea in 2-3 sentences.
@@ -34,6 +35,7 @@ Guidelines:
 - dryRun: a short trace on a small example.
 - timeComplexity / spaceComplexity: Big-O with a one-line reason.
 - keyLearning: the reusable takeaway.
+- topics: 1-4 short lowercase algorithm/data-structure tags for this problem, e.g. ["dynamic-programming","greedy","graphs"].
 
 Problem: ${submission.problemTitle || submission.problemSlug}
 Platform: ${submission.platform}
@@ -110,6 +112,9 @@ async function generateExplanation(submission) {
       timeComplexity: String(parsed.timeComplexity || 'Unknown'),
       spaceComplexity: String(parsed.spaceComplexity || 'Unknown'),
       keyLearning: String(parsed.keyLearning || ''),
+      topics: Array.isArray(parsed.topics)
+        ? parsed.topics.slice(0, 5).map((t) => String(t).trim()).filter(Boolean)
+        : [],
       generatedBy: MODEL,
       isFallback: false,
     };

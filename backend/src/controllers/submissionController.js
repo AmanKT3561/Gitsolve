@@ -72,21 +72,31 @@ async function processSubmission(submissionId, user) {
     return; // do not attempt AI / stats if we never saved
   }
 
-  // --- AI (never fatal) ---
-  submission.status = 'ai_processing';
-  await submission.save();
+  // --- AI (never fatal: the solution is already saved to GitHub) ---
+  try {
+    submission.status = 'ai_processing';
+    await submission.save();
 
-  const explanationData = await generateExplanation(submission);
-  const explanation = await AIExplanation.create({
-    user: user._id,
-    submission: submission._id,
-    ...explanationData,
-  });
-  submission.aiExplanation = explanation._id;
+    const explanationData = await generateExplanation(submission);
+    const explanation = await AIExplanation.create({
+      user: user._id,
+      submission: submission._id,
+      ...explanationData,
+    });
+    submission.aiExplanation = explanation._id;
+    // Topics are inferred by the AI; copy onto the submission for stats.
+    if (Array.isArray(explanationData.topics) && explanationData.topics.length) {
+      submission.topics = explanationData.topics;
+    }
+  } catch (err) {
+    console.error('[pipeline] ai failed (non-fatal):', err.message);
+  }
+
+  // Mark completed regardless of AI outcome — the solve is saved.
   submission.status = 'completed';
   await submission.save();
 
-  // --- Statistics ---
+  // --- Statistics (best-effort; getStatistics also aggregates live) ---
   try {
     await bumpStatistics(user._id, submission);
   } catch (err) {
@@ -154,6 +164,18 @@ async function listSubmissions(req, res, next) {
     const filter = { user: req.user._id };
     if (req.query.platform) filter.platform = req.query.platform;
 
+    // Self-heal: if the host slept/restarted during background processing, a
+    // submission can be stranded in 'github_saved'/'ai_processing'. The solution
+    // is already saved, so promote anything stuck for >2 min to 'completed'.
+    await Submission.updateMany(
+      {
+        user: req.user._id,
+        status: { $in: ['github_saved', 'ai_processing'] },
+        updatedAt: { $lt: new Date(Date.now() - 2 * 60 * 1000) },
+      },
+      { $set: { status: 'completed' } }
+    );
+
     const [items, total] = await Promise.all([
       Submission.find(filter)
         .sort({ createdAt: -1 })
@@ -184,10 +206,61 @@ async function getSubmission(req, res, next) {
 }
 
 // GET /api/statistics
+// Computed live from the submissions themselves so the numbers always reflect
+// reality (a solve counts once saved, regardless of the AI explanation status).
 async function getStatistics(req, res, next) {
   try {
-    let stats = await Statistics.findOne({ user: req.user._id });
-    if (!stats) stats = await Statistics.create({ user: req.user._id });
+    const userId = req.user._id;
+    // Every submission is an accepted solve (the extension only fires on AC).
+    // Count all of them except ones whose GitHub save hard-failed.
+    const subs = await Submission.find({ user: userId, status: { $ne: 'failed' } })
+      .select('difficulty platform language topics createdAt')
+      .lean();
+
+    const dayKey = (d) => new Date(d).toISOString().slice(0, 10);   // YYYY-MM-DD
+    const monthKey = (d) => new Date(d).toISOString().slice(0, 7);  // YYYY-MM
+
+    const stats = {
+      totalSolved: subs.length,
+      easySolved: 0,
+      mediumSolved: 0,
+      hardSolved: 0,
+      byPlatform: {},
+      byLanguage: {},
+      byTopic: {},
+      byMonth: {},
+      activeDates: [],
+      currentStreak: 0,
+      longestStreak: 0,
+    };
+
+    const days = new Set();
+    for (const s of subs) {
+      const field = DIFF_FIELD[s.difficulty];
+      if (field) stats[field] += 1;
+
+      const p = sanitizeKey(s.platform || 'unknown');
+      stats.byPlatform[p] = (stats.byPlatform[p] || 0) + 1;
+
+      const l = sanitizeKey(s.language || 'unknown');
+      stats.byLanguage[l] = (stats.byLanguage[l] || 0) + 1;
+
+      const m = monthKey(s.createdAt);
+      stats.byMonth[m] = (stats.byMonth[m] || 0) + 1;
+
+      for (const t of s.topics || []) {
+        const tk = sanitizeKey(t);
+        if (tk) stats.byTopic[tk] = (stats.byTopic[tk] || 0) + 1;
+      }
+
+      days.add(dayKey(s.createdAt));
+    }
+
+    stats.activeDates = Array.from(days).sort();
+    const { currentStreak, longestStreak } = computeStreaks(stats.activeDates);
+    stats.currentStreak = currentStreak;
+    stats.longestStreak = longestStreak;
+
     res.json({ statistics: stats });
   } catch (err) {
     next(err);

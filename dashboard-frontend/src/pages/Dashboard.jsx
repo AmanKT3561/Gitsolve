@@ -43,7 +43,7 @@ export default function Dashboard() {
       <StreakHeatmap stats={s} />
 
       {/* Headline metrics */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard label="Total solved" value={s.totalSolved || 0} accent="#37d67a" />
         <StatCard
           label="Platforms"
