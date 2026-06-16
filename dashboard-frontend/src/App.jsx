@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard.jsx';
 import SubmissionDetail from './pages/SubmissionDetail.jsx';
 import Login from './pages/Login.jsx';
-import { isAuthed, clearToken } from './lib/api';
+import { isAuthed, clearToken, api } from './lib/api';
 import { Button } from './components/ui';
 
 function Brand() {
@@ -20,6 +20,22 @@ function Brand() {
 }
 
 function TopBar() {
+  const [repoUrl, setRepoUrl] = useState('https://github.com');
+  useEffect(() => {
+    let active = true;
+    api
+      .me()
+      .then((u) => {
+        if (active && u && u.username) {
+          setRepoUrl(`https://github.com/${u.username}/${u.solutionsRepo || 'gitsolve-solutions'}`);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function logout() {
     clearToken();
     window.location.assign('/login');
@@ -30,7 +46,7 @@ function TopBar() {
         <Brand />
         <nav className="flex items-center gap-3">
           <a
-            href="https://github.com"
+            href={repoUrl}
             target="_blank"
             rel="noreferrer"
             className="text-xs text-muted hover:text-slate-200"
