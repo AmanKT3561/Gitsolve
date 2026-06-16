@@ -79,18 +79,35 @@ async function processSubmission(submissionId, user) {
     await submission.save();
 
     const explanationData = await generateExplanation(submission);
+    const { topics, ...explanationFields } = explanationData; // topics live on the submission, not the explanation
     const explanation = await AIExplanation.create({
       user: user._id,
       submission: submission._id,
-      ...explanationData,
+      ...explanationFields,
     });
     submission.aiExplanation = explanation._id;
-    // Topics are inferred by the AI; copy onto the submission for stats.
-    if (Array.isArray(explanationData.topics) && explanationData.topics.length) {
-      submission.topics = explanationData.topics;
+    if (Array.isArray(topics) && topics.length) {
+      submission.topics = topics;
     }
+    console.log(`[pipeline] explanation saved for ${submission._id} (fallback=${!!explanationData.isFallback})`);
   } catch (err) {
-    console.error('[pipeline] ai failed (non-fatal):', err.message);
+    console.error('[pipeline] ai step failed:', err.message, err.stack);
+    // Guarantee an explanation record exists so the UI is never blank.
+    try {
+      if (!submission.aiExplanation) {
+        const fb = await AIExplanation.create({
+          user: user._id,
+          submission: submission._id,
+          intuition: 'An explanation could not be generated for this submission. See the source code.',
+          approach: 'See the source code for the implemented approach.',
+          isFallback: true,
+          generatedBy: 'none',
+        });
+        submission.aiExplanation = fb._id;
+      }
+    } catch (e2) {
+      console.error('[pipeline] fallback explanation also failed:', e2.message);
+    }
   }
 
   // Mark completed regardless of AI outcome — the solve is saved.
@@ -139,15 +156,18 @@ async function createSubmission(req, res, next) {
       status: 'pending',
     });
 
-    // Respond immediately; do the heavy lifting in the background.
-    res.status(201).json({ submission });
+    // Process synchronously and THEN respond. Detached background work after
+    // res.json() is not reliable on free-tier hosts (the instance can idle/spin
+    // down before it finishes), which left submissions without explanations.
+    // The pipeline is fully guarded, so this won't fail the request.
+    try {
+      await processSubmission(submission._id, req.user);
+    } catch (e) {
+      console.error('[pipeline] uncaught:', e && e.message);
+    }
 
-    // Detached — capture the (token-bearing) user document by closure.
-    setImmediate(() => {
-      processSubmission(submission._id, req.user).catch((e) =>
-        console.error('[pipeline] uncaught:', e)
-      );
-    });
+    const finalDoc = await Submission.findById(submission._id).populate('aiExplanation');
+    return res.status(201).json({ submission: finalDoc || submission });
   } catch (err) {
     // Unique-index collision (race) -> treat as duplicate, not error.
     if (err && err.code === 11000) {

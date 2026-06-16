@@ -82,7 +82,7 @@ async function generateExplanation(submission) {
       },
       {
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-        timeout: 30000,
+        timeout: 20000,
         validateStatus: () => true,
       }
     );
