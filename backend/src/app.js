@@ -41,14 +41,24 @@ app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use(errorHandler);
 
 // --- Boot ---
-(async () => {
+// Open the port FIRST so the platform's port scan succeeds immediately, then
+// connect to MongoDB in the background. A slow/misconfigured DB no longer
+// prevents the service (and /health) from coming up — it just logs and retries.
+app.listen(PORT, () => console.log(`[server] GitSolve AI backend listening on port ${PORT}`));
+
+async function connectWithRetry(attempt = 1) {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log(`[server] GitSolve AI backend listening on port ${PORT}`));
   } catch (err) {
-    console.error('[server] failed to start:', err.message);
-    process.exit(1);
+    console.error(`[server] MongoDB connection failed (attempt ${attempt}): ${err.message}`);
+    if (/not set/i.test(err.message)) return; // misconfig: retrying won't help
+    if (attempt < 12) {
+      setTimeout(() => connectWithRetry(attempt + 1), 5000);
+    } else {
+      console.error('[server] giving up on MongoDB after 12 attempts; check MONGODB_URI and Atlas Network Access (allow 0.0.0.0/0).');
+    }
   }
-})();
+}
+connectWithRetry();
 
 module.exports = app;
