@@ -9,6 +9,16 @@ const { normalizeLanguage } = require('../utils/lang');
 
 const DIFF_FIELD = { Easy: 'easySolved', Medium: 'mediumSolved', Hard: 'hardSolved' };
 
+// Reject if a promise doesn't settle in `ms`, so a hung network call to Gemini
+// can never strand the pipeline (the AI catch then writes a fallback).
+function withTimeout(promise, ms, label) {
+  let t;
+  const timeout = new Promise((_, reject) => {
+    t = setTimeout(() => reject(new Error(`${label || 'operation'} timed out after ${ms}ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+}
+
 function sanitizeKey(k) {
   // Mongo object keys cannot contain dots/$; normalize topic/lang/platform keys.
   return String(k || 'unknown').replace(/[.$]/g, '_').trim() || 'unknown';
@@ -78,7 +88,7 @@ async function processSubmission(submissionId, user) {
     submission.status = 'ai_processing';
     await submission.save();
 
-    const explanationData = await generateExplanation(submission);
+    const explanationData = await withTimeout(generateExplanation(submission), 25000, 'gemini');
     const { topics, ...explanationFields } = explanationData; // topics live on the submission, not the explanation
     const explanation = await AIExplanation.create({
       user: user._id,
